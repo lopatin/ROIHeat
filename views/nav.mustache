@@ -1,0 +1,12 @@
+<div id="navbar">
+    <span style="float: right">
+    {{#loggedIn}}
+        <a href="/logout">Logout</a>
+    {{/loggedIn}}
+    {{^loggedIn}}
+        <a href="/register">Register</a>
+        <a href="/login">Sign In</a>
+    {{/loggedIn}}
+    </span>
+    <h3>ROIHeat</h3>
+</div>

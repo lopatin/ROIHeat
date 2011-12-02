@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{title}}</title>
+<link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css">
+<link rel="stylesheet" href="/css/main.css">
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="/js/bootstrap-modal.js"></script>
+<script src="/js/socket.io.js"></script>
+<script src="/js/main.js"></script>
+</head>
+<body>
+    <div class='wrapper'>
+        <div id="sidebar">
+            <div id="corner">
+                <a class="logout" href="/logout">Logout</a>
+                <a href="#" id="logo"><strong>ROI</strong>Heat</a>
+            </div>
+            
+            <a style="float: right;" class="addProject btn primary" data-controls-modal="addDealModal" data-backdrop="static">+ Add</a>
+            <h2>Projects</h2>
+            <input style="margin-left: 10px; margin-top: 5px; margin-bottom: 5px; width: 93%; display: none;" id="addProjectInput" type="text" />
+            <div id="projects"></div>
+        </div>
+        <div id='content'>
+            <div id="header">
+                <h1>Welcome to ROIHeat</h1>
+            </div>
+        </div>
+    </div>
+    
+    {{{yield}}}
+    
+</body>
+        </div>
+    </div>
+</html>
