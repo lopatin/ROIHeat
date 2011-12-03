@@ -42,12 +42,17 @@ io.sockets.on('connection', function(socket){
     /*
      * Socket.io connections for webmasters
      */
+     
     // This method returns all projects for the user
     socket.on('projects', function(){
         console.log("Projects requested");
         lastSocket = socket;
-        projects.find().toArray(function(err, projectsArray){
-            socket.emit('projects', projectsArray);
+        projects.find().forEach(function(project){
+            console.log(project._id);
+            pageviews.find({projectID: ""+project._id}).toArray(function(err, pvs){
+                project.pageviews = pvs;
+                socket.emit('project', project);
+            });
         });
     });
     
@@ -83,24 +88,26 @@ io.sockets.on('connection', function(socket){
      */
     socket.emit('connected_client');
 
-    socket.on('connected_client', function(url){
-    socket.emit('confirm_client_connection');
-    console.log("new connection from: " + socket.handshake.address.address);
-    console.log(socket.handshake.headers);
-    pageviews.insert({
-        time: socket.handshake.time,
-        ip: socket.handshake.address.address,
-        url: url,
-        userAgent: socket.handshake.headers['user-agent']
-    }, 
-    function(err, pageview){
-        console.log("HIIIII");
-        console.log(pageview._id);
-        socket.set('pageview', pageview);
-        
-        //if(lastSocket)
-           // lastSocket.emit('new_pageview', pageview);
-    });
+    socket.on('connected_client', function(data){
+        socket.emit('confirm_client_connection');
+        console.log("new connection from: " + socket.handshake.address.address);
+        console.log(socket.handshake.headers);
+        pageviews.insert({
+            time: socket.handshake.time,
+            ip: socket.handshake.address.address,
+            url: data.url,
+            title: data.title,
+            projectID: data.projectID,
+            userAgent: socket.handshake.headers['user-agent']
+        }, 
+        function(err, pageview){
+            console.log("HIIIII");
+            console.log(pageview._id);
+            socket.set('pageview', pageview);
+            
+            //if(lastSocket)
+               // lastSocket.emit('new_pageview', pageview);
+        });
     });
 
     // Log click data
@@ -121,18 +128,23 @@ io.sockets.on('connection', function(socket){
         socket.get('pageview', function(err, pageview){
             pageviews.update({_id: pageview._id}, {$push: {'mousePoints': mousePointData}});
         });
+        console.log(data.position.x);
         if(lastHeatmap)
             lastHeatmap.emit('singlePoint', {x: data.position.x, y: data.position.y});
     });
     
 });
 
-/**
+/*
  * Web server stuff to serve UI pages
  */
 
-// Index page
+// Test page, shits not working
+app.get('/test', function(req, res){
+    res.send("working");
+});
 
+// Index page
 app.get('/dashboard', function(req, res){
     // Redirect to landing page if not logged in
     if(!req.session.loggedIn)
@@ -197,7 +209,9 @@ app.get('/login', function(req, res){
 
 // Login action
 app.post('/login', function(req, res){
+    console.log('wanna login ' + req.body.username);
     users.findOne({username: req.body.username, password: req.body.password}, function(err, user){
+        console.log('found something');
         if(user != null){
             // Successful login
             req.session.loggedIn = true;
@@ -224,11 +238,13 @@ app.get('/logout', function(req, res){
 
 // View the JSON contents of any supported collection in MongoDB
 app.get('/view/:collection', function(req, res){
-    pageviews.remove({});
+    
     // Select correct collection
     var collection = null;
     if(req.params.collection == 'pageviews')
         collection = pageviews;
+    if(req.params.collection == 'projects')
+        collection = projects;
     
     var resStr = "";    // Initialize return string
     if(collection != null){
@@ -245,7 +261,10 @@ app.get('/view/:collection', function(req, res){
 });
 
 
-
+app.get('/delete/pageviews', function(req, res){
+    pageviews.remove({});
+    res.send("deleted");
+});
 
 
 

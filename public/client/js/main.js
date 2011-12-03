@@ -1,47 +1,45 @@
 
 var target, x, y, xy;
 var ready = false;
-var projectID = "4ed7a4061ae5d6593800000a";
+var projectID = "4ed97d9e06843ac40a000001";
 
 $(document).ready(function(){
 
-	var socket = io.connect('http://www.statsonstats.com:8080');
+	var socket = io.connect('127.0.0.1:8080');
 
 	socket.on('connected_client', function(){
-		alert('connected client');
-		socket.emit('connected_client',{url: window.location.href, projectID: projectID});
+    if(window.location.href.indexOf("showHeatmap") == -1)
+		  socket.emit('connected_client',{url: window.location.href, title: $(document).attr('title'), projectID: projectID});
 	});
 
 	socket.on('confirm_client_connection', function(){
 		ready = true;
+
+    // Set mouse listeners on conection
+    if(window.location.href.indexOf("showHeatmap") == -1){
+      alert('confirmed2');
+      $(document).click(function(e){
+        socket.emit('click', {
+          position: getRelativeCoordinates(e, $("body")[0])
+        });
+      });
+        
+
+      setInterval(function(){
+        if(xy)
+          socket.emit('mousePoint', {
+            target: target,
+            position: xy
+          });
+      }, 100);
+
+      $(document).mousemove(function(e){
+        x = e.offsetX;
+        y = e.offsetY;
+        xy = getRelativeCoordinates(e, $("body")[0]);
+      });
+    }
 	});
-
-	if(window.location.href.indexOf("showHeatmap") == -1){
-		$(document).click(function(e){
-			if(ready)
-				socket.emit('click', {
-					projectID: projectID,
-					target: fullPath(e.target),
-					position: getRelativeCoordinates(e, $("body")[0])
-				});
-		});
-
-		setInterval(function(){
-			if(ready)
-				socket.emit('mousePoint', {
-					projectID: projectID,
-					target: target,
-					position: xy
-				});
-		}, 100);
-
-		$(document).mousemove(function(e){
-			x = e.offsetX;
-			y = e.offsetY;
-			xy = getRelativeCoordinates(e, $("body")[0]);
-			target = fullPath(e.target);
-		});
-	}
 
 
 	socket.on('heatmapCoords', function(coords){
@@ -73,35 +71,7 @@ $(document).ready(function(){
 		socket.emit('getHeatmapCoords', {url: window.location.href, projectID: projectID});
 	}
 
-
-
-
 });
-
-/**
- * Get XPath of parameter
- */
-function fullPath( el){
-  var names = [];
-  while (el.parentNode){
-    if (el.id){
-      names.unshift('#'+el.id);
-      break;
-    }else{
-      for (var c=1,e=el;e.previousElementSibling;e=e.previousElementSibling,c++);
-      names.unshift(el.tagName+":nth-child("+c+")");
-      el=el.parentNode;
-    }
-  }
-  return names.join(" > ");
-}
-
-
-
-
-
-
-
 
 
 /**
